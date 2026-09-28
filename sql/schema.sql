@@ -1,5 +1,5 @@
-CREATE TABLE IF NOT EXISTS radios (
-    id TEXT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS cases (
+    id INTEGER PRIMARY KEY,
     image_path TEXT NOT NULL,
     source TEXT,
     ground_truth_label TEXT,
@@ -17,24 +17,32 @@ CREATE TABLE IF NOT EXISTS prompts (
 
 CREATE TABLE IF NOT EXISTS runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    case_id TEXT,
+    case_id INTEGER NOT NULL,
+    prompt_id INTEGER NOT NULL, 
     image_path TEXT,
     model_name TEXT,
-    prompt_version TEXT,
     prediction_json TEXT,
     predicted_class TEXT,
     confidence REAL,
     latency_ms INTEGER,
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(case_id) REFERENCES cases(id), -- to link the case table
+    FOREIGN KEY(prompt_id) REFERENCES prompts(id) -- to link the prompt table
 );
 
 CREATE TABLE IF NOT EXISTS evaluations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    run_id INTEGER NOT NULL,
-    ground_truth_label TEXT NOT NULL,
-    correct INTEGER NOT NULL,
+    run_id INTEGER NOT NULL UNIQUE,
+    ground_truth_label TEXT,
+    correct INTEGER,
     error_type TEXT,
-    reviewer_comment TEXT,
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(run_id) REFERENCES runs(id)
 );
+
+-- Contraints to ensure uniqueness and integrity
+CREATE UNIQUE INDEX IF NOT EXISTS uq_prompts_name_version
+ON prompts(prompt_name, prompt_version);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_runs_case_prompt
+ON runs(case_id, prompt_id);
