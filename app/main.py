@@ -19,7 +19,7 @@ from src.inference import pixel_baseline_predict, toy_predict, vlm_predict_place
 from src.guardrails import apply_safety_guardrails
 from src.image_validator import validate_image
 from src.anonymizer import anonymize_to_path
-from src.database import DEFAULT_DB, get_runs, insert_case, insert_prompt, insert_run
+from src.database import DEFAULT_DB, get_runs, init_db, insert_case, insert_prompt, insert_run
 
 app = FastAPI(title="Pulmonar")
 
@@ -44,6 +44,9 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
 )
+
+# sur un clone neuf, data/database.sqlite n'existe pas (gitignoré) : sans ça /runs plante avec "no such table: runs"
+init_db(DEFAULT_DB)
 
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")
 
