@@ -9,6 +9,8 @@ from PIL import Image, ImageFilter, ImageStat
 
 
 MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "pixel_baseline.joblib"
+# modele entraine sur RSNA (dataset actif), MODEL_PATH ci-dessus reste celui du pilote Kaggle
+RSNA_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "pixel_baseline_rsna.joblib"
 
 
 def extract_features(image_path: str | Path) -> np.ndarray:

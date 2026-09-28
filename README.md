@@ -63,15 +63,17 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 Puis ouvrir http://localhost:8000/
 
-L'interface propose plusieurs modèles via le menu deroulant : **Pixel Baseline** (regression logistique, rapide), **Reference / Ameliore (jouet)** (regle de test), **MedGemma Baseline** (prompt v0) et **MedGemma Ameliore** (prompt v10, le meilleur trouve sur RSNA).
+L'interface propose plusieurs modèles via le menu deroulant : **Pixel Baseline** (regression logistique entrainee sur RSNA, rapide), **Reference / Ameliore (jouet)** (regle de test), **MedGemma Baseline** (prompt v0) et **MedGemma Ameliore** (prompt v10, le meilleur trouve sur RSNA).
 
 ## Importer le dataset RSNA
 
-A faire **avant** toute évaluation réelle : les commandes d'évaluation ci-dessous s'appuient sur `data/cases.csv` et `data/database.sqlite`, produits par cet import. Necessite un compte Kaggle authentifie ayant accepte les regles de la competition `rsna-pneumonia-detection-challenge` :
+A faire **avant** toute évaluation réelle : les commandes d'évaluation ci-dessous s'appuient sur `data/cases.csv` et `data/database.sqlite`, produits par cet import. Les images (`data/brutes_rsna/`) et la base ne sont pas versionnées : sur un clone neuf, il faut les regénérer. Necessite un compte Kaggle authentifie ayant accepte les regles de la competition `rsna-pneumonia-detection-challenge` :
 ```
-python scripts/import_rsna_pneumonia.py --max-cases 100
+python scripts/import_rsna_pneumonia.py --max-cases 0
 python scripts/setup_db.py --all
 ```
+`--max-cases 0` importe les 26 684 cas (plusieurs Go) : c'est nécessaire, car les `case_id` sont attribués dans l'ordre des fichiers DICOM et le holdout `data/rsna_holdout_sample_100.txt` contient des ids jusqu'a 26682. Un import partiel (`--max-cases N`) ne garde que les ids 1 à N, **écrase `data/cases.csv`**, et ne contiendrait alors aucun cas du holdout. Si la competition (fermée depuis 2018) refuse le téléchargement, `--dataset <owner>/<name>` utilise un miroir Kaggle ; les ids ne restent identiques que si le miroir contient exactement les mêmes DICOM.
+
 (Le smoke eval ci-dessous, lui, tourne sur un dataset synthetique deja fourni et ne necessite pas cet import.)
 
 ## Lancer l'évaluation
@@ -91,6 +93,7 @@ python scripts/run_prompt_evaluation.py --mode improved --prompt-version 10 --ca
 ## Lancer les tests
 
 ```
+python -m pip install -r requirements-test.txt
 set PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
 python -m pytest -q
 ```
@@ -110,7 +113,7 @@ python -m pytest -q
 ## Modèles
 
 - **toy baseline** : règle simple sur le nom de fichier et le signal image (pour les tests et la reproductibilité).
-- **baseline pixel** : regression logistique sur features image (`models/pixel_baseline_rsna.joblib` pour RSNA, `models/pixel_baseline.joblib` pour le pilote Kaggle).
+- **baseline pixel** : regression logistique sur features image (`models/pixel_baseline_rsna.joblib` pour RSNA, utilise par l'application web ; `models/pixel_baseline.joblib` pour le pilote Kaggle).
 - **MedGemma-4b-it** : VLM medical, quantifie 4-bit, prompt charge depuis `prompts/` (v0 baseline, v10 meilleur prompt ameliore).
 
 ## Sources et licences des données

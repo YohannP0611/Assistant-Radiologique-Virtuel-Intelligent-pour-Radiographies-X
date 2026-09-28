@@ -9,7 +9,7 @@ from functools import lru_cache
 
 from PIL import Image, ImageStat
 
-from .pixel_model import extract_features, load_model, model_exists
+from .pixel_model import RSNA_MODEL_PATH, extract_features, load_model, model_exists
 from .preprocessing import basic_quality_flag, load_image
 
 from transformers import AutoProcessor, AutoModelForImageTextToText, BitsAndBytesConfig
@@ -154,16 +154,16 @@ def toy_predict(image_path: str | Path, mode: str = "baseline", version: int = 0
     }
 
 
-def pixel_baseline_predict(image_path: str | Path) -> dict[str, Any]:
+def pixel_baseline_predict(image_path: str | Path, model_path: str | Path = RSNA_MODEL_PATH) -> dict[str, Any]:
     start = time.perf_counter()
     quality = basic_quality_flag(image_path)
 
-    if not model_exists():
+    if not model_exists(model_path):
         pred, conf = "uncertain", 0.0
         evidence = ["pixel baseline model not trained"]
         justification = "Run scripts/train_pixel_baseline.py before using the pixel baseline."
     else:
-        model = load_model()
+        model = load_model(model_path)
         features = extract_features(image_path).reshape(1, -1)
         pred = str(model.predict(features)[0])
         probabilities = model.predict_proba(features)[0]
